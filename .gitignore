@@ -97,4 +97,5 @@ vendor/
 
 ### Custom ###
 profile.cov
+coverage.txt
 release/
