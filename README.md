@@ -1,3 +1,7 @@
+![Codeship](https://img.shields.io/codeship/87164220-a2e7-0134-2faa-0a9a91773973.svg?style=flat-square)
+[![Codecov](https://img.shields.io/codecov/c/github/nproc/run.svg?style=flat-square)](https://codecov.io/github/nproc/run)
+[![Go Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat-square)](https://goreportcard.com/report/github.com/nproc/run)
+
 # run
 
 `run` replaces *tokens* in a config file template by the values of *environment variables* with the same as as the tokens, saves everything in a new config file and it executes a command.
