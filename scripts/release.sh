@@ -52,7 +52,7 @@ COMPILED=$(date "+%Y-%m-%dT%H:%M:%SZ%z")
 gox \
   -osarch="linux/amd64 linux/386 darwin/amd64 darwin/386 windows/amd64 windows/386" \
   -output="release/{{.Dir}}_{{.OS}}_{{.Arch}}" \
-  -ldflags "-w -s -X github.com/nproc/run/build.Version=$VERSION -X github.com/nproc/run/build.Commit=$HASH -X github.com/nproc/run/build.Compiled=$COMPILED"
+  -ldflags "-w -s -X github.com/txgruppi/run/build.Version=$VERSION -X github.com/txgruppi/run/build.Commit=$HASH -X github.com/txgruppi/run/build.Compiled=$COMPILED"
 
 which upx &>/dev/null && upx release/*
 

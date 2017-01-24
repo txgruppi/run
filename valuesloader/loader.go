@@ -3,7 +3,7 @@ package valuesloader
 import (
 	"fmt"
 
-	"github.com/nproc/run/cache"
+	"github.com/txgruppi/run/cache"
 )
 
 // New returns a new ValuesLoader instance or an error if the provided loader

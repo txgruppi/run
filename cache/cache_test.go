@@ -3,8 +3,8 @@ package cache_test
 import (
 	"testing"
 
-	"github.com/nproc/run/cache"
 	"github.com/stretchr/testify/assert"
+	"github.com/txgruppi/run/cache"
 )
 
 func TestCache(t *testing.T) {

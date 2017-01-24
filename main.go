@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/nproc/run/cli"
+	"github.com/txgruppi/run/cli"
 )
 
 func main() {

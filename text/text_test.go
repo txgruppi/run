@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/nproc/run/text"
 	"github.com/stretchr/testify/assert"
+	"github.com/txgruppi/run/text"
 )
 
 func TestText(t *testing.T) {

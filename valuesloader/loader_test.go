@@ -3,8 +3,8 @@ package valuesloader_test
 import (
 	"testing"
 
-	"github.com/nproc/run/valuesloader"
 	"github.com/stretchr/testify/assert"
+	"github.com/txgruppi/run/valuesloader"
 )
 
 func TestValuesLoader(t *testing.T) {

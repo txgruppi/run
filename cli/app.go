@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/nproc/run/build"
-	"github.com/nproc/run/text"
-	"github.com/nproc/run/valuesloader"
+	"github.com/txgruppi/run/build"
+	"github.com/txgruppi/run/text"
+	"github.com/txgruppi/run/valuesloader"
 	"github.com/urfave/cli"
 )
 
@@ -16,7 +16,7 @@ const (
 		" and run a command after the template is successfully compiled." +
 		"\n   The compiled file will have the permissions set to 0777." +
 		"\n   Check the projects page for the documentation and more info at" +
-		" https://github.com/nproc/run"
+		" https://github.com/txgruppi/run"
 )
 
 // NewApp returns a configured cli application.

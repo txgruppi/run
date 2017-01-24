@@ -8,9 +8,9 @@ import (
 	"path"
 	"testing"
 
-	rcli "github.com/nproc/run/cli"
-	"github.com/nproc/run/valuesloader"
 	"github.com/stretchr/testify/assert"
+	rcli "github.com/txgruppi/run/cli"
+	"github.com/txgruppi/run/valuesloader"
 	"github.com/urfave/cli"
 )
 
@@ -352,7 +352,7 @@ func envLoader(env map[string]string) valuesloader.ValueLoaderFunc {
 }
 
 func makeTempDir() (string, error) {
-	dir := path.Join(os.TempDir(), "github.com", "nproc", "run")
+	dir := path.Join(os.TempDir(), "github.com", "txgruppi", "run")
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		return "", err
 	}
@@ -364,7 +364,7 @@ func makeTempDir() (string, error) {
 }
 
 func makeTempFile(contents string, permissions os.FileMode) (string, error) {
-	dir := path.Join(os.TempDir(), "github.com", "nproc", "run")
+	dir := path.Join(os.TempDir(), "github.com", "txgruppi", "run")
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		return "", err
 	}

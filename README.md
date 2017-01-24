@@ -1,6 +1,6 @@
 ![Codeship](https://img.shields.io/codeship/87164220-a2e7-0134-2faa-0a9a91773973.svg?style=flat-square)
-[![Codecov](https://img.shields.io/codecov/c/github/nproc/run.svg?style=flat-square)](https://codecov.io/github/nproc/run)
-[![Go Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat-square)](https://goreportcard.com/report/github.com/nproc/run)
+[![Codecov](https://img.shields.io/codecov/c/github/txgruppi/run.svg?style=flat-square)](https://codecov.io/github/txgruppi/run)
+[![Go Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat-square)](https://goreportcard.com/report/github.com/txgruppi/run)
 
 # run
 
@@ -42,7 +42,7 @@ FROM busybox:1.25.1
 
 MAINTAINER Tarcisio Gruppi <txgruppi@gmail.com>
 
-ADD https://github.com/nproc/run/releases/download/0.0.1/run_linux_amd64 /app/run
+ADD https://github.com/txgruppi/run/releases/download/0.0.1/run_linux_amd64 /app/run
 ADD ./config.toml.dist /app/config.toml.dist
 ADD ./server /app/server
 
