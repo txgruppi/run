@@ -99,3 +99,5 @@ vendor/
 profile.cov
 coverage.txt
 release/
+.env
+.envrc
