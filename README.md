@@ -1,16 +1,16 @@
-![Codeship](https://img.shields.io/codeship/87164220-a2e7-0134-2faa-0a9a91773973.svg?style=flat-square)
+![Codeship](https://img.shields.io/codeship/cb3a7670-f7ee-0136-66a3-16fab027ee75.svg?style=flat-square)
 [![Codecov](https://img.shields.io/codecov/c/github/txgruppi/run.svg?style=flat-square)](https://codecov.io/github/txgruppi/run)
 [![Go Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat-square)](https://goreportcard.com/report/github.com/txgruppi/run)
 
 # run
 
-`run` replaces *tokens* in a config file template by the values of *environment variables* with the same as as the tokens, saves everything in a new config file and it executes a command.
+`run` replaces _tokens_ in a config file template by the values of _environment variables_ with the same as as the tokens, saves everything in a new config file and it executes a command.
 
-It was designed to be used in *docker containers* where a config file should receive values from the *environment variables* before running the container's command.
+It was designed to be used in _docker containers_ where a config file should receive values from the _environment variables_ before running the container's command.
 
 ## Usage
 
-The example below is of a container with a *webserver* but before starting the server it will compile the config file template using the `run` command.
+The example below is of a container with a _webserver_ but before starting the server it will compile the config file template using the `run` command.
 
 ### Environment variables (.env)
 
