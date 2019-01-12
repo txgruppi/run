@@ -44,7 +44,7 @@ VERSION="$MAJOR.$MINOR.$PATCH"
 
 rm -rf release
 
-glide install
+go mod download
 
 HASH=$(git rev-parse HEAD)
 COMPILED=$(date "+%Y-%m-%dT%H:%M:%SZ%z")
