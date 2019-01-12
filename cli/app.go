@@ -58,33 +58,35 @@ func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
 		output := c.String("output")
 		delay := c.Int("delay")
 
-		data, err := ioutil.ReadFile(input)
-		if err != nil {
-			return newExitError(err, 1)
-		}
+		if input != "" && output != "" {
+			data, err := ioutil.ReadFile(input)
+			if err != nil {
+				return newExitError(err, 1)
+			}
 
-		vl, err := valuesloader.New(loaderFunc)
-		if err != nil {
-			return newExitError(err, 2)
-		}
+			vl, err := valuesloader.New(loaderFunc)
+			if err != nil {
+				return newExitError(err, 2)
+			}
 
-		tokens := text.Tokens(data)
+			tokens := text.Tokens(data)
 
-		for _, token := range tokens {
-			data = text.Replace(data, token, vl.Get(token))
-		}
+			for _, token := range tokens {
+				data = text.Replace(data, token, vl.Get(token))
+			}
 
-		err = ioutil.WriteFile(output, data, 0777)
-		if err != nil {
-			return newExitError(err, 3)
-		}
-
-		if len(c.Args()) == 0 {
-			return nil
+			err = ioutil.WriteFile(output, data, 0777)
+			if err != nil {
+				return newExitError(err, 3)
+			}
 		}
 
 		if delay > 0 {
 			time.Sleep(time.Duration(delay) * time.Second)
+		}
+
+		if len(c.Args()) == 0 {
+			return nil
 		}
 
 		name := c.Args()[0]
