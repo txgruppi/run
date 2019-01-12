@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/txgruppi/run/build"
 	"github.com/txgruppi/run/text"
@@ -46,10 +47,16 @@ func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
 			Usage:  "The output path for the compiled config file",
 			EnvVar: "RUN_OUTPUT",
 		},
+		cli.IntFlag{
+			Name:   "delay, d",
+			Usage:  "Number of seconds to wait before running the command",
+			EnvVar: "RUN_DELAY",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		input := c.String("input")
 		output := c.String("output")
+		delay := c.Int("delay")
 
 		data, err := ioutil.ReadFile(input)
 		if err != nil {
@@ -74,6 +81,10 @@ func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
 
 		if len(c.Args()) == 0 {
 			return nil
+		}
+
+		if delay > 0 {
+			time.Sleep(time.Duration(delay) * time.Second)
 		}
 
 		name := c.Args()[0]

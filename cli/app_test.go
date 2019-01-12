@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	rcli "github.com/txgruppi/run/cli"
@@ -306,9 +307,12 @@ func TestApp(t *testing.T) {
 		cli.ErrWriter = &stderr
 
 		args := []string{"run", "-i", input, "-o", output, "echo", "it", "works"}
+		before := time.Now()
 		err = app.Run(args)
+		after := time.Now()
 		assert.Nil(err)
 		assert.Equal(0, lastExitCode)
+		assert.True(after.Sub(before) < 1*time.Second)
 
 		assert.Empty(stderr.String())
 		assert.Equal("it works\n", stdout.String())
@@ -342,6 +346,36 @@ func TestApp(t *testing.T) {
 		assert.Equal(2, lastExitCode)
 		assert.Empty(stdout.String())
 		assert.Equal("loader is required\n", stderr.String())
+	})
+
+	t.Run("run with delay", func(t *testing.T) {
+		assert := assert.New(t)
+		lastExitCode = 0
+
+		app := rcli.NewApp(envLoader(fullEnv))
+
+		input, err := makeTempFile(template, 0777)
+		assert.Nil(err)
+
+		output, err := makeTempFile("", 0777)
+		assert.Nil(err)
+
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		app.Writer = &stdout
+		cli.ErrWriter = &stderr
+
+		args := []string{"run", "-d", "1", "-i", input, "-o", output, "echo", "it", "works"}
+		before := time.Now()
+		err = app.Run(args)
+		after := time.Now()
+		assert.Nil(err)
+		assert.Equal(0, lastExitCode)
+		assert.True(after.Sub(before) > 1*time.Second)
+
+		assert.Empty(stderr.String())
+		assert.Equal("it works\n", stdout.String())
 	})
 }
 
