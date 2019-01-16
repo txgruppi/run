@@ -13,17 +13,42 @@ func TestText(t *testing.T) {
 	url = "{{MONGO_URL}}"
 
 	[jwt]
-	secret = "{{JWT_SECRET}}"
+	secret = "{{ JWT_SECRET   }}"
 
 	[server]
-	bind = "{{SERVER_BIND}}"
-	port = "{{SERVER_PORT}}"
+	bind = "{{ server.bind || SERVER_BIND}}"
+	port = "{{server.port||SERVER_PORT}}"
 
-	[to_test_repeated_tokens]
-	bind = "{{SERVER_BIND}}"
-	port = "{{SERVER_PORT}}"
+	[other_server]
+	bind = "{{   server.bind ||   SERVER_BIND   }}"
+	port = "{{server.por||SERVER_PORT}}"
 	`)
-	expectedTokens := []string{"MONGO_URL", "JWT_SECRET", "SERVER_BIND", "SERVER_PORT"}
+	expectedTokens := []*text.Token{
+		&text.Token{
+			Raw:  "{{MONGO_URL}}",
+			Keys: []string{"MONGO_URL"},
+		},
+		&text.Token{
+			Raw:  "{{ JWT_SECRET   }}",
+			Keys: []string{"JWT_SECRET"},
+		},
+		&text.Token{
+			Raw:  "{{ server.bind || SERVER_BIND}}",
+			Keys: []string{"server.bind", "SERVER_BIND"},
+		},
+		&text.Token{
+			Raw:  "{{server.port||SERVER_PORT}}",
+			Keys: []string{"server.port", "SERVER_PORT"},
+		},
+		&text.Token{
+			Raw:  "{{   server.bind ||   SERVER_BIND   }}",
+			Keys: []string{"server.bind", "SERVER_BIND"},
+		},
+		&text.Token{
+			Raw:  "{{server.por||SERVER_PORT}}",
+			Keys: []string{"server.por", "SERVER_PORT"},
+		},
+	}
 	expectedData := []byte(`[database]
 	url = "0"
 
@@ -34,9 +59,9 @@ func TestText(t *testing.T) {
 	bind = "2"
 	port = "3"
 
-	[to_test_repeated_tokens]
-	bind = "2"
-	port = "3"
+	[other_server]
+	bind = "4"
+	port = "5"
 	`)
 
 	t.Run("nil data", func(t *testing.T) {
@@ -56,7 +81,7 @@ func TestText(t *testing.T) {
 
 		actual := data
 		for index, token := range tokens {
-			actual = text.Replace(actual, token, strconv.Itoa(index))
+			actual = text.Replace(actual, token.Raw, strconv.Itoa(index))
 		}
 		assert.Equal(expectedData, actual)
 	})
