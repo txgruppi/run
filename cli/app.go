@@ -21,7 +21,7 @@ const (
 )
 
 // NewApp returns a configured cli application.
-func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
+func NewApp() *cli.App {
 	app := cli.NewApp()
 	app.Version = build.Version
 	app.Compiled = build.CompiledTime().UTC()
@@ -52,6 +52,16 @@ func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
 			Usage:  "Number of seconds to wait before running the command",
 			EnvVar: "RUN_DELAY",
 		},
+		cli.StringFlag{
+			Name:   "json, j",
+			Usage:  "JSON data to be used by JSONLoader",
+			EnvVar: "RUN_JSON",
+		},
+		cli.StringFlag{
+			Name:   "remote-json, r",
+			Usage:  "URL to a JSON file to be used by RemoteJSONLoader",
+			EnvVar: "RUN_REMOTE_JSON",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		input := c.String("input")
@@ -64,15 +74,44 @@ func NewApp(loaderFunc valuesloader.ValueLoaderFunc) *cli.App {
 				return newExitError(err, 1)
 			}
 
-			vl, err := valuesloader.New(loaderFunc)
+			envLoader, err := valuesloader.EnvironmentLoader()
+			if err != nil {
+				return newExitError(err, 4)
+			}
+			loaderFuncs := []valuesloader.ValueLoaderFunc{envLoader}
+
+			if value := c.String("json"); value != "" {
+				loader, err := valuesloader.JSONLoader([]byte(value))
+				if err != nil {
+					return newExitError(err, 5)
+				}
+				loaderFuncs = append(loaderFuncs, loader)
+			}
+
+			if value := c.String("remote-json"); value != "" {
+				loader, err := valuesloader.RemoteJSONLoader(value)
+				if err != nil {
+					return newExitError(err, 5)
+				}
+				loaderFuncs = append(loaderFuncs, loader)
+			}
+
+			vl, err := valuesloader.New(loaderFuncs...)
 			if err != nil {
 				return newExitError(err, 2)
 			}
 
 			tokens := text.Tokens(data)
 
+		TokensLoop:
 			for _, token := range tokens {
-				data = text.Replace(data, token, vl.Get(token))
+				for _, key := range token.Keys {
+					if value, ok := vl.Lookup(key); ok {
+						data = text.Replace(data, token.Raw, value)
+						continue TokensLoop
+					}
+				}
+				data = text.Replace(data, token.Raw, "")
 			}
 
 			err = ioutil.WriteFile(output, data, 0777)
