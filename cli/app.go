@@ -62,6 +62,11 @@ func NewApp() *cli.App {
 			Usage:  "URL to a JSON file to be used by RemoteJSONLoader",
 			EnvVar: "RUN_REMOTE_JSON",
 		},
+		cli.StringFlag{
+			Name:   "json-file, f",
+			Usage:  "Path to a JSON file to be used by JSONFileLoader",
+			EnvVar: "RUN_JSON_FILE",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		input := c.String("input")
@@ -92,6 +97,14 @@ func NewApp() *cli.App {
 				loader, err := valuesloader.RemoteJSONLoader(value)
 				if err != nil {
 					return newExitError(err, 5)
+				}
+				loaderFuncs = append(loaderFuncs, loader)
+			}
+
+			if value := c.String("json-file"); value != "" {
+				loader, err := valuesloader.JSONFileLoader(value)
+				if err != nil {
+					return newExitError(err, 7)
 				}
 				loaderFuncs = append(loaderFuncs, loader)
 			}

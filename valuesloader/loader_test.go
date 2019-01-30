@@ -1,6 +1,7 @@
 package valuesloader_test
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -87,6 +88,51 @@ func TestValuesLoader(t *testing.T) {
 		defer server.Close()
 
 		loader, err := valuesloader.RemoteJSONLoader(server.URL)
+		require.Nil(t, err)
+		require.NotNil(t, loader)
+
+		t.Run("existing props", func(t *testing.T) {
+			pairs := map[string]string{
+				"database.driver": "mysql",
+				"database.dsn":    "user:password@tcp(host:port)/database",
+			}
+
+			for key, value := range pairs {
+				t.Run(key, func(t *testing.T) {
+					loaded, ok := loader(key)
+					require.True(t, ok)
+					require.Equal(t, value, loaded)
+				})
+			}
+		})
+
+		t.Run("missing or invalid props", func(t *testing.T) {
+			pairs := map[string]string{
+				"database":               "",
+				"some_non_existing_prop": "",
+			}
+
+			for key, value := range pairs {
+				t.Run(key, func(t *testing.T) {
+					loaded, ok := loader(key)
+					require.False(t, ok)
+					require.Equal(t, value, loaded)
+				})
+			}
+		})
+	})
+
+	t.Run("JSONFileLoader", func(t *testing.T) {
+		data := []byte(`{"database":{"driver":"mysql","dsn":"user:password@tcp(host:port)/database"}}`)
+
+		file, err := ioutil.TempFile(os.TempDir(), "run-test")
+		require.Nil(t, err)
+		defer file.Close()
+
+		_, err = file.Write(data)
+		require.Nil(t, err)
+
+		loader, err := valuesloader.JSONFileLoader(file.Name())
 		require.Nil(t, err)
 		require.NotNil(t, loader)
 

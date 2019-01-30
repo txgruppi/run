@@ -71,3 +71,18 @@ func RemoteJSONLoader(url string) (ValueLoaderFunc, error) {
 
 	return JSONLoader(data)
 }
+
+func JSONFileLoader(filepath string) (ValueLoaderFunc, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return JSONLoader(data)
+}
