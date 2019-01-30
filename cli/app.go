@@ -96,7 +96,7 @@ func NewApp() *cli.App {
 			if value := c.String("remote-json"); value != "" {
 				loader, err := valuesloader.RemoteJSONLoader(value)
 				if err != nil {
-					return newExitError(err, 5)
+					return newExitError(err, 6)
 				}
 				loaderFuncs = append(loaderFuncs, loader)
 			}
