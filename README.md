@@ -4,40 +4,79 @@
 
 # run
 
-`run` replaces _tokens_ in a config file template by the values of _environment variables_ with the same as as the tokens, saves everything in a new config file and it executes a command.
+`run` replaces _tokens_ in a config file tempalte by values from the specific data sources, saves a new config file and executes a command.
 
-It was designed to be used in _docker containers_ where a config file should receive values from the _environment variables_ before running the container's command.
+It was designed to be used in _docker containers_ where a config file should receive values from the data sources before running the container's command.
 
-## Usage
+## Data sources
+
+- Environment variables
+- Local JSON file
+- Remote JSON file
+
+## Options
+
+```
+--input value, -i value        The config template with the tokens to be replaced [$RUN_INPUT]
+--output value, -o value       The output path for the compiled config file [$RUN_OUTPUT]
+--delay value, -d value        Number of seconds to wait before running the command (default: 0) [$RUN_DELAY]
+--json value, -j value         JSON data to be used by JSONLoader [$RUN_JSON]
+--remote-json value, -r value  URL to a JSON file to be used by RemoteJSONLoader [$RUN_REMOTE_JSON]
+--json-file value, -f value    Path to a JSON file to be used by JSONFileLoader [$RUN_JSON_FILE]
+--help, -h                     show help
+--version, -v                  print the version
+```
+
+## Example
 
 The example below is of a container with a _webserver_ but before starting the server it will compile the config file template using the `run` command.
 
 ### Environment variables (.env)
 
-```
+```shell
 MONGO_URL="mongodb://user:password@my.server.com/mydb"
 JWT_SECRET="my$uper$ecret"
 SERVER_BIND="0.0.0.0"
 SERVER_PORT="8000"
 ```
 
+### Local JSON file (/mnt/shared/secrets/vars.json)
+
+```json
+{
+  "jwt": {
+    "secret": "myjwtsecret"
+  }
+}
+```
+
+### Remote JSON file (http://config-service/app/config.json)
+
+```json
+{
+  "server": {
+    "port": "1234"
+  }
+}
+```
+
 ### Config template (config.toml.dist)
 
-```
+```toml
 [database]
 url = "{{MONGO_URL}}"
 
 [jwt]
-secret = "{{JWT_SECRET}}"
+secret = "{{jwt.secret|JWT_SECRET}}"
 
 [server]
-bind = "{{SERVER_BIND}}"
-port = "{{SERVER_PORT}}"
+bind = "{{server.bind|SERVER_BIND}}"
+port = "{{server.port|SERVER_PORT}}"
 ```
 
-### Dockerfile (txgruppi/run-sample)
+### Dockerfile
 
-```
+```dockerfile
 FROM busybox:1.25.1
 
 MAINTAINER Tarcisio Gruppi <txgruppi@gmail.com>
@@ -46,25 +85,25 @@ ADD https://github.com/txgruppi/run/releases/download/0.0.1/run_linux_amd64 /app
 ADD ./config.toml.dist /app/config.toml.dist
 ADD ./server /app/server
 
-RUN run -i /app/config.toml.dist -o /app/config.toml /app/server -c /app/config.toml
+RUN run -d 2 -i /app/config.toml.dist -o /app/config.toml /app/server -c /app/config.toml
 ```
 
 ### Running the container
 
-```
-docker run -d --restart=always --env-file .env -p 8000 txgruppi/run-sample
+```shell
+docker run -d --restart=always --env-file .env -p 1234 txgruppi/run-sample
 ```
 
 ### Compiled config file (config.toml)
 
-```
+```toml
 [database]
 url = "mongodb://user:password@my.server.com/mydb"
 
 [jwt]
-secret = "my$uper$ecret"
+secret = "myjwtsecret"
 
 [server]
 bind = "0.0.0.0"
-port = "8000"
+port = "1234"
 ```
