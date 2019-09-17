@@ -73,6 +73,10 @@ func NewApp() *cli.App {
 		output := c.String("output")
 		delay := c.Int("delay")
 
+		if delay > 0 {
+			time.Sleep(time.Duration(delay) * time.Second)
+		}
+
 		if input != "" && output != "" {
 			data, err := ioutil.ReadFile(input)
 			if err != nil {
@@ -131,10 +135,6 @@ func NewApp() *cli.App {
 			if err != nil {
 				return newExitError(err, 3)
 			}
-		}
-
-		if delay > 0 {
-			time.Sleep(time.Duration(delay) * time.Second)
 		}
 
 		if len(c.Args()) == 0 {
