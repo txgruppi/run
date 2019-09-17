@@ -53,7 +53,7 @@ gox \
 	-output="release/{{.Dir}}_{{.OS}}_{{.Arch}}" \
 	-ldflags "-w -s -X github.com/txgruppi/run/build.Version=$VERSION -X github.com/txgruppi/run/build.Commit=$HASH -X github.com/txgruppi/run/build.Compiled=$COMPILED"
 
-which upx &>/dev/null && upx release/*
+which upx &>/dev/null && upx release/* || true
 
 if [ "$1" != "keep" ]; then
 	echo "$VERSION" >VERSION
