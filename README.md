@@ -85,7 +85,13 @@ ADD https://github.com/txgruppi/run/releases/download/0.0.1/run_linux_amd64 /app
 ADD ./config.toml.dist /app/config.toml.dist
 ADD ./server /app/server
 
-RUN run -d 2 -i /app/config.toml.dist -o /app/config.toml /app/server -c /app/config.toml
+RUN run \
+  -d 2 \
+  --json-file /mnt/shared/secrets/vars.json \
+  --remote-json http://config-service/app/config.json \
+  -i /app/config.toml.dist \
+  -o /app/config.toml \
+  /app/server -c /app/config.toml
 ```
 
 ### Running the container
