@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/valyala/fastjson"
@@ -92,7 +93,15 @@ func JSONFileLoader(filepath string) (ValueLoaderFunc, error) {
 }
 
 func AWSSecretsManagerLoader(secretArn string) (ValueLoaderFunc, error) {
-	sess := session.New()
+	sess, err := session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{
+			Credentials: credentials.NewEnvCredentials(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	sm := secretsmanager.New(sess)
 	out, err := sm.GetSecretValue(&secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretArn),
