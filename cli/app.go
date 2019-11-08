@@ -130,7 +130,7 @@ func NewApp() *cli.App {
 			loaderFuncs = append(loaderFuncs, loader)
 		}
 
-		if value := c.String("aws-secret-arn"); value != "" {
+		if value := c.String("aws-secret"); value != "" {
 			loader, err := valuesloader.AWSSecretsManagerLoader(value)
 			if err != nil {
 				return newExitError(err, 8)
