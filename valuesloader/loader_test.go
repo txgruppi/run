@@ -167,6 +167,46 @@ func TestValuesLoader(t *testing.T) {
 		})
 	})
 
+	t.Run("AWSSecretsManagerLoader", func(t *testing.T) {
+		if os.Getenv("RUN_AWS_SECRET_ARN") == "" {
+			t.Skipf("missing RUN_AWS_SECRET_ARN, cannot test AWSSecretsManagerLoader")
+			return
+		}
+
+		loader, err := valuesloader.AWSSecretsManagerLoader(os.Getenv("RUN_AWS_SECRET_ARN"))
+		require.Nil(t, err)
+		require.NotNil(t, loader)
+
+		t.Run("existing props", func(t *testing.T) {
+			pairs := map[string]string{
+				"run_test": "It works!",
+			}
+
+			for key, value := range pairs {
+				t.Run(key, func(t *testing.T) {
+					loaded, ok := loader(key)
+					require.True(t, ok)
+					require.Equal(t, value, loaded)
+				})
+			}
+		})
+
+		t.Run("missing or invalid props", func(t *testing.T) {
+			pairs := map[string]string{
+				"database":               "",
+				"some_non_existing_prop": "",
+			}
+
+			for key, value := range pairs {
+				t.Run(key, func(t *testing.T) {
+					loaded, ok := loader(key)
+					require.False(t, ok)
+					require.Equal(t, value, loaded)
+				})
+			}
+		})
+	})
+
 	t.Run("multiple loaders", func(t *testing.T) {
 		dataLocal := []byte(`{"database":{"driver":"mysql","dsn":"user:password@tcp(host:port)/database"}}`)
 		dataRemote := []byte(`{"server":{"bind":"0.0.0.0","port":80,"just_some_float":1.234},"types":{"null":null,"true":true,"false":false}}`)

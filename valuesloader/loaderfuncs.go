@@ -1,12 +1,16 @@
 package valuesloader
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/valyala/fastjson"
 )
 
@@ -85,4 +89,20 @@ func JSONFileLoader(filepath string) (ValueLoaderFunc, error) {
 	}
 
 	return JSONLoader(data)
+}
+
+func AWSSecretsManagerLoader(secretArn string) (ValueLoaderFunc, error) {
+	sess := session.New()
+	sm := secretsmanager.New(sess)
+	out, err := sm.GetSecretValue(&secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretArn),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, fmt.Errorf("got unexpected nil value")
+	}
+
+	return JSONLoader([]byte(*out.SecretString))
 }

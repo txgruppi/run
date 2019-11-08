@@ -67,6 +67,11 @@ func NewApp() *cli.App {
 			Usage:  "Path to a JSON file to be used by JSONFileLoader",
 			EnvVar: "RUN_JSON_FILE",
 		},
+		cli.StringFlag{
+			Name:   "aws-secret",
+			Usage:  "The ARN or name of a secret with a JSON encoded value",
+			EnvVar: "RUN_AWS_SECRET_ARN",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		input := c.String("input")
@@ -109,6 +114,14 @@ func NewApp() *cli.App {
 				loader, err := valuesloader.JSONFileLoader(value)
 				if err != nil {
 					return newExitError(err, 7)
+				}
+				loaderFuncs = append(loaderFuncs, loader)
+			}
+
+			if value := c.String("aws-secret-arn"); value != "" {
+				loader, err := valuesloader.AWSSecretsManagerLoader(value)
+				if err != nil {
+					return newExitError(err, 8)
 				}
 				loaderFuncs = append(loaderFuncs, loader)
 			}
