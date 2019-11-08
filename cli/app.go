@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/txgruppi/run/build"
+	"github.com/txgruppi/run/logger"
 	"github.com/txgruppi/run/text"
 	"github.com/txgruppi/run/valuesloader"
 	"github.com/urfave/cli"
@@ -39,6 +40,11 @@ func NewApp() *cli.App {
 		},
 	}
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:   "debug",
+			Usage:  "Enable debug output",
+			EnvVar: "RUN_DEBUG",
+		},
 		cli.StringFlag{
 			Name:   "input, i",
 			Usage:  "The config template with the tokens to be replaced",
@@ -92,14 +98,17 @@ func NewApp() *cli.App {
 		var envSlice []string
 		var vl *valuesloader.ValuesLoader
 
+		logger.Debug = c.Bool("debug")
 		input := c.String("input")
 		output := c.String("output")
 		delay := c.Int("delay")
 
 		if delay > 0 {
+			logger.Printf("Starting delay of %s", time.Duration(delay)*time.Second)
 			time.Sleep(time.Duration(delay) * time.Second)
 		}
 
+		logger.Printf("Registering environment loader")
 		envLoader, err := valuesloader.EnvironmentLoader()
 		if err != nil {
 			return newExitError(err, 4)
@@ -107,6 +116,7 @@ func NewApp() *cli.App {
 		loaderFuncs := []valuesloader.ValueLoaderFunc{envLoader}
 
 		if value := c.String("json"); value != "" {
+			logger.Printf("Registering JSON loader with value %s", c.String("json"))
 			loader, err := valuesloader.JSONLoader([]byte(value))
 			if err != nil {
 				return newExitError(err, 5)
@@ -115,6 +125,7 @@ func NewApp() *cli.App {
 		}
 
 		if value := c.String("remote-json"); value != "" {
+			logger.Printf("Registering remote JSON loader with URL %s", c.String("remote-json"))
 			loader, err := valuesloader.RemoteJSONLoader(value)
 			if err != nil {
 				return newExitError(err, 6)
@@ -123,6 +134,7 @@ func NewApp() *cli.App {
 		}
 
 		if value := c.String("json-file"); value != "" {
+			logger.Printf("Registering JSON file loader with file %s", c.String("json-file"))
 			loader, err := valuesloader.JSONFileLoader(value)
 			if err != nil {
 				return newExitError(err, 7)
@@ -131,6 +143,7 @@ func NewApp() *cli.App {
 		}
 
 		if value := c.String("aws-secret"); value != "" {
+			logger.Printf("Registering AWS SecretManager loader with SecretID %s", c.String("aws-secret"))
 			loader, err := valuesloader.AWSSecretsManagerLoader(value)
 			if err != nil {
 				return newExitError(err, 8)
@@ -138,24 +151,30 @@ func NewApp() *cli.App {
 			loaderFuncs = append(loaderFuncs, loader)
 		}
 
+		logger.Printf("Creating ValuesLoader")
 		vl, err = valuesloader.New(loaderFuncs...)
 		if err != nil {
 			return newExitError(err, 2)
 		}
 
 		if input != "" {
+			logger.Printf("Reading input file")
 			inputData, err := ioutil.ReadFile(input)
 			if err != nil {
 				return newExitError(err, 1)
 			}
 
+			logger.Printf("Finding input tokens")
 			inputTokens := text.Tokens(inputData)
+
+			logger.Printf("Rendering input data")
 			inputRender, err = render(inputData, inputTokens, vl)
 			if err != nil {
 				newExitError(err, 10)
 			}
 
 			if output != "" {
+				logger.Printf("Writing output file")
 				err = ioutil.WriteFile(output, inputRender, 0777)
 				if err != nil {
 					return newExitError(err, 3)
@@ -164,17 +183,22 @@ func NewApp() *cli.App {
 		}
 
 		if c.String("env-file") != "" {
+			logger.Printf("Reading env file %s", c.String("env-file"))
 			envData, err = ioutil.ReadFile(c.String("env-file"))
 			if err != nil {
 				return newExitError(err, 9)
 			}
 
+			logger.Printf("Finding env file tokens")
 			envTokens = text.Tokens(envData)
+
+			logger.Printf("Rendering env file")
 			envRender, err = render(envData, envTokens, vl)
 			if err != nil {
 				newExitError(err, 11)
 			}
 
+			logger.Printf("Getting complete environment values")
 			envSlice, err = environ(envRender)
 			if err != nil {
 				return newExitError(err, 12)
@@ -182,29 +206,40 @@ func NewApp() *cli.App {
 		}
 
 		if c.String("env-output-var") != "" && inputRender != nil {
+			logger.Printf("Creating output environment variable with value:")
+			logger.Printf(string(inputRender))
 			pair := c.String("env-output-var") + "=" + string(inputRender)
 			if envSlice == nil {
-				envSlice = []string{pair}
+				logger.Printf("Getting complete environment values")
+				envSlice, err = environ([]byte(pair))
+				if err != nil {
+					return newExitError(err, 12)
+				}
 			} else {
+				logger.Printf("Adding output environment variable")
 				envSlice = append(envSlice, pair)
 			}
 		}
 
 		if len(c.Args()) == 0 {
+			logger.Printf("No command to run. Done")
 			return nil
 		}
 
 		name := c.Args()[0]
 		args := c.Args()[1:]
 
+		logger.Printf("Preparing command %s with args %v", name, args)
 		cmd := exec.Command(name, args...)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = app.Writer
 		cmd.Stderr = cli.ErrWriter
 		if envSlice != nil {
+			logger.Printf("Adding enviroment variables to the command")
 			cmd.Env = envSlice
 		}
 
+		logger.Printf("Running command")
 		return cmd.Run()
 	}
 
