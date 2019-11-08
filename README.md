@@ -23,6 +23,7 @@ It was designed to be used in _docker containers_ where a config file should rec
 --json value, -j value         JSON data to be used by JSONLoader [$RUN_JSON]
 --remote-json value, -r value  URL to a JSON file to be used by RemoteJSONLoader [$RUN_REMOTE_JSON]
 --json-file value, -f value    Path to a JSON file to be used by JSONFileLoader [$RUN_JSON_FILE]
+--aws-secret value             The ARN or name of a secret with a JSON encoded value [$RUN_AWS_SECRET_ARN]
 --help, -h                     show help
 --version, -v                  print the version
 ```
@@ -44,8 +45,8 @@ SERVER_PORT="8000"
 
 ```json
 {
-  "jwt": {
-    "secret": "myjwtsecret"
+  "server": {
+    "bind": "0.0.0.0"
   }
 }
 ```
@@ -56,6 +57,18 @@ SERVER_PORT="8000"
 {
   "server": {
     "port": "1234"
+  }
+}
+```
+
+### AWS SecretManager
+
+Secret name: `jwtconfig`
+
+```
+{
+  "jwt": {
+    "secret": "myjwtsecret"
   }
 }
 ```
@@ -89,6 +102,7 @@ RUN run \
   -d 2 \
   --json-file /mnt/shared/secrets/vars.json \
   --remote-json http://config-service/app/config.json \
+  --aws-secret jwtconfig \
   -i /app/config.toml.dist \
   -o /app/config.toml \
   /app/server -c /app/config.toml
