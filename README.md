@@ -13,6 +13,7 @@ It was designed to be used in _docker containers_ where a config file should rec
 - Environment variables
 - Local JSON file
 - Remote JSON file
+- AWS SecretManager
 
 ## Options
 
