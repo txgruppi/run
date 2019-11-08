@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/txgruppi/run/build"
 	"github.com/txgruppi/run/text"
 	"github.com/txgruppi/run/valuesloader"
@@ -72,8 +74,24 @@ func NewApp() *cli.App {
 			Usage:  "The ARN or name of a secret with a JSON encoded value",
 			EnvVar: "RUN_AWS_SECRET_ARN",
 		},
+		cli.StringFlag{
+			Name:   "env-file",
+			Usage:  "A dotenv file template to be rendered and added to the environment",
+			EnvVar: "RUN_ENV_FILE",
+		},
+		cli.StringFlag{
+			Name:   "env-output-var",
+			Usage:  "Create a environment variable with the contents of the output file",
+			EnvVar: "RUN_ENV_OUTPUT_VAR",
+		},
 	}
-	app.Action = func(c *cli.Context) error {
+	app.Action = func(c *cli.Context) (err error) {
+		var envData []byte
+		var envTokens []*text.Token
+		var inputRender, envRender []byte
+		var envSlice []string
+		var vl *valuesloader.ValuesLoader
+
 		input := c.String("input")
 		output := c.String("output")
 		delay := c.Int("delay")
@@ -82,71 +100,93 @@ func NewApp() *cli.App {
 			time.Sleep(time.Duration(delay) * time.Second)
 		}
 
-		if input != "" && output != "" {
-			data, err := ioutil.ReadFile(input)
+		envLoader, err := valuesloader.EnvironmentLoader()
+		if err != nil {
+			return newExitError(err, 4)
+		}
+		loaderFuncs := []valuesloader.ValueLoaderFunc{envLoader}
+
+		if value := c.String("json"); value != "" {
+			loader, err := valuesloader.JSONLoader([]byte(value))
+			if err != nil {
+				return newExitError(err, 5)
+			}
+			loaderFuncs = append(loaderFuncs, loader)
+		}
+
+		if value := c.String("remote-json"); value != "" {
+			loader, err := valuesloader.RemoteJSONLoader(value)
+			if err != nil {
+				return newExitError(err, 6)
+			}
+			loaderFuncs = append(loaderFuncs, loader)
+		}
+
+		if value := c.String("json-file"); value != "" {
+			loader, err := valuesloader.JSONFileLoader(value)
+			if err != nil {
+				return newExitError(err, 7)
+			}
+			loaderFuncs = append(loaderFuncs, loader)
+		}
+
+		if value := c.String("aws-secret-arn"); value != "" {
+			loader, err := valuesloader.AWSSecretsManagerLoader(value)
+			if err != nil {
+				return newExitError(err, 8)
+			}
+			loaderFuncs = append(loaderFuncs, loader)
+		}
+
+		vl, err = valuesloader.New(loaderFuncs...)
+		if err != nil {
+			return newExitError(err, 2)
+		}
+
+		if input != "" {
+			inputData, err := ioutil.ReadFile(input)
 			if err != nil {
 				return newExitError(err, 1)
 			}
 
-			envLoader, err := valuesloader.EnvironmentLoader()
+			inputTokens := text.Tokens(inputData)
+			inputRender, err = render(inputData, inputTokens, vl)
 			if err != nil {
-				return newExitError(err, 4)
+				newExitError(err, 10)
 			}
-			loaderFuncs := []valuesloader.ValueLoaderFunc{envLoader}
 
-			if value := c.String("json"); value != "" {
-				loader, err := valuesloader.JSONLoader([]byte(value))
+			if output != "" {
+				err = ioutil.WriteFile(output, inputRender, 0777)
 				if err != nil {
-					return newExitError(err, 5)
+					return newExitError(err, 3)
 				}
-				loaderFuncs = append(loaderFuncs, loader)
 			}
+		}
 
-			if value := c.String("remote-json"); value != "" {
-				loader, err := valuesloader.RemoteJSONLoader(value)
-				if err != nil {
-					return newExitError(err, 6)
-				}
-				loaderFuncs = append(loaderFuncs, loader)
-			}
-
-			if value := c.String("json-file"); value != "" {
-				loader, err := valuesloader.JSONFileLoader(value)
-				if err != nil {
-					return newExitError(err, 7)
-				}
-				loaderFuncs = append(loaderFuncs, loader)
-			}
-
-			if value := c.String("aws-secret-arn"); value != "" {
-				loader, err := valuesloader.AWSSecretsManagerLoader(value)
-				if err != nil {
-					return newExitError(err, 8)
-				}
-				loaderFuncs = append(loaderFuncs, loader)
-			}
-
-			vl, err := valuesloader.New(loaderFuncs...)
+		if c.String("env-file") != "" {
+			envData, err = ioutil.ReadFile(c.String("env-file"))
 			if err != nil {
-				return newExitError(err, 2)
+				return newExitError(err, 9)
 			}
 
-			tokens := text.Tokens(data)
-
-		TokensLoop:
-			for _, token := range tokens {
-				for _, key := range token.Keys {
-					if value, ok := vl.Lookup(key); ok {
-						data = text.Replace(data, token.Raw, value)
-						continue TokensLoop
-					}
-				}
-				data = text.Replace(data, token.Raw, "")
-			}
-
-			err = ioutil.WriteFile(output, data, 0777)
+			envTokens = text.Tokens(envData)
+			envRender, err = render(envData, envTokens, vl)
 			if err != nil {
-				return newExitError(err, 3)
+				newExitError(err, 11)
+			}
+
+			envSlice, err = environ(envRender)
+			if err != nil {
+				return newExitError(err, 12)
+			}
+		}
+
+		if c.String("env-output-var") != "" && inputRender != nil {
+			pair := c.String("env-output-var") + "=" + string(inputRender)
+			if envSlice == nil {
+				envSlice = []string{pair}
+			} else {
+				envSlice = append(envSlice, pair)
 			}
 		}
 
@@ -161,11 +201,46 @@ func NewApp() *cli.App {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = app.Writer
 		cmd.Stderr = cli.ErrWriter
+		if envSlice != nil {
+			cmd.Env = envSlice
+		}
 
 		return cmd.Run()
 	}
 
 	return app
+}
+
+func render(in []byte, tks []*text.Token, vl *valuesloader.ValuesLoader) ([]byte, error) {
+	out := make([]byte, len(in))
+	copy(out, in)
+
+TokensLoop:
+	for _, token := range tks {
+		for _, key := range token.Keys {
+			if value, ok := vl.Lookup(key); ok {
+				out = text.Replace(out, token.Raw, value)
+				continue TokensLoop
+			}
+		}
+		out = text.Replace(out, token.Raw, "")
+	}
+	return out, nil
+}
+
+func environ(envData []byte) ([]string, error) {
+	r := bytes.NewReader(envData)
+	em, err := godotenv.Parse(r)
+	if err != nil {
+		return nil, err
+	}
+
+	out := os.Environ()
+	for k, v := range em {
+		out = append(out, k+"="+v)
+	}
+
+	return out, nil
 }
 
 func newExitError(err error, code int) error {

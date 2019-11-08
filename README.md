@@ -25,6 +25,8 @@ It was designed to be used in _docker containers_ where a config file should rec
 --remote-json value, -r value  URL to a JSON file to be used by RemoteJSONLoader [$RUN_REMOTE_JSON]
 --json-file value, -f value    Path to a JSON file to be used by JSONFileLoader [$RUN_JSON_FILE]
 --aws-secret value             The ARN or name of a secret with a JSON encoded value [$RUN_AWS_SECRET_ARN]
+--env-file value               A dotenv file template to be rendered and added to the environment [$RUN_ENV_FILE]
+--env-output-var value         Create a environment variable with the contents of the output file [$RUN_ENV_OUTPUT_VAR]
 --help, -h                     show help
 --version, -v                  print the version
 ```
