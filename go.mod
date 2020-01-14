@@ -9,3 +9,5 @@ require (
 	github.com/valyala/fastjson v1.3.0
 	golang.org/x/net v0.0.0-20191108063844-7e6e90b9ea88 // indirect
 )
+
+go 1.13
